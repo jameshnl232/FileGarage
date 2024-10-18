@@ -7,5 +7,14 @@ export default defineSchema({
   files: defineTable({
     content: v.string(),
     name: v.string(),
-  }),
+    organizationId: v.optional(v.string()),
+  }).index("by_organization", ["organizationId"]),
+
+
+  users: defineTable({
+    tokenIdentifier: v.string(),
+    orgId: v.array(v.string()),
+  }).index("by_tokenIdentifier", ["tokenIdentifier"]),
+
 });
+
