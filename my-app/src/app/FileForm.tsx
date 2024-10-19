@@ -19,6 +19,7 @@ import { api } from "../../convex/_generated/api";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Doc } from "../../convex/_generated/dataModel";
 
 const formSchema = z.object({
   title: z.string().min(2).max(200),
@@ -65,18 +66,28 @@ export default function FileForm({
     console.log(values);
 
     const postUrl = await generateUploadUrl();
+    const fileType = values.file[0].type;
     const result = await fetch(postUrl, {
       method: "POST",
-      headers: { "Content-Type": values.file[0].type },
+      headers: { "Content-Type": fileType },
       body: values.file[0],
     });
     const { storageId } = await result.json();
 
+    
+    const types = {
+      "image/png": "image",
+      "image/jpeg": "image",
+      "image/jpg": "image",
+      "application/pdf": "pdf",
+      "text/csv": "csv",
+    } as Record<string, Doc<"files">["type"]>;
     try {
       await createFile({
         name: values.title,
         fileId: storageId,
         organizationId: orgId,
+        type: types[fileType],
       });
 
       form.reset();
@@ -126,7 +137,11 @@ export default function FileForm({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={form.formState.isSubmitting} className="flex">
+        <Button
+          type="submit"
+          disabled={form.formState.isSubmitting}
+          className="flex"
+        >
           {form.formState.isSubmitting && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
