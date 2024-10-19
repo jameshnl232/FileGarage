@@ -5,16 +5,13 @@ export default defineSchema({
   // Other tables here...
 
   files: defineTable({
-    content: v.string(),
     name: v.string(),
     organizationId: v.optional(v.string()),
+    fileId: v.id("_storage"),
   }).index("by_organization", ["organizationId"]),
-
 
   users: defineTable({
     tokenIdentifier: v.string(),
     orgId: v.array(v.string()),
   }).index("by_tokenIdentifier", ["tokenIdentifier"]),
-
 });
-

@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 //import localFont from "next/font/local";
 import "./globals.css";
 import { ConvexClientProvider } from "./ConvexClientProvider";
+import Header from "./Header";
+import { Toaster } from "@/components/ui/toaster";
+
+
 
 /* const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,7 +31,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={` antialiased`}>
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider>
+          <Header />
+          {children}
+          <Toaster />
+        </ConvexClientProvider>
       </body>
     </html>
   );
