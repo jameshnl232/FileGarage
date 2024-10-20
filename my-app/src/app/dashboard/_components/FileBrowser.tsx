@@ -108,7 +108,9 @@ export default function FileBrowser({
                   <Label htmlFor="type">Type Filter</Label>
                   <Select
                     value={selectedView}
-                    onValueChange={(value: any) => setSelectedView(value)}
+                    onValueChange={(value: "image" | "csv" | "pdf" | "all") =>
+                      setSelectedView(value)
+                    }
                   >
                     <SelectTrigger
                       id="type"
