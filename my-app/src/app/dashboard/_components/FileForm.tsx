@@ -15,11 +15,11 @@ import { Input } from "@/components/ui/input";
 
 import { z } from "zod";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Doc } from "../../convex/_generated/dataModel";
+import { Doc } from "../../../../convex/_generated/dataModel";
 
 const formSchema = z.object({
   title: z.string().min(2).max(200),
@@ -74,7 +74,6 @@ export default function FileForm({
     });
     const { storageId } = await result.json();
 
-    
     const types = {
       "image/png": "image",
       "image/jpeg": "image",

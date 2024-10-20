@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Doc, Id } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -22,6 +22,7 @@ import {
   GanttChartIcon,
   ImageIcon,
   MoreVertical,
+  StarIcon,
   TrashIcon,
 } from "lucide-react";
 import {
@@ -36,20 +37,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ReactNode, useState } from "react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 
-//exuberant-penguin-209.convex.cloud/api/storage/5e85106f-468f-49b1-af57-76252350c43e
-const getImageUrl = (fileId: Id<"_storage">) => {
-  return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;
-};
 
 const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
   const [open, setOpen] = useState(false);
   const deleteFile = useMutation(api.file.deleteFile);
-
+  const toggleFavorite = useMutation(api.file.toggleFavorite);
 
   const { toast } = useToast();
   return (
@@ -69,7 +66,7 @@ const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
               onClick={async () => {
                 if (file.organizationId) {
                   await deleteFile({
-                    fileId: file.fileId,
+                    fileId: file._id,
                   });
                   toast({
                     variant: "default",
@@ -97,6 +94,13 @@ const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
             <TrashIcon className="text-red-500 " />
             Delete
           </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-yellow-500 flex items-center justify-center cursor-pointer"
+            onClick={() => toggleFavorite({ fileId: file._id })}
+          >
+            <StarIcon className="text-yellow-500 " />
+            Add to favorites
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
@@ -121,8 +125,6 @@ export default function FileCard({
     pdf: <FileTextIcon />,
     csv: <GanttChartIcon />,
   } as Record<Doc<"files">["type"], ReactNode>;
-
-  console.log(file.url);
 
   return (
     <Card>
