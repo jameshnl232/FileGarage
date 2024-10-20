@@ -13,14 +13,16 @@ import Image from "next/image";
 export default function FileBrowser({
   title,
   favoriteOnly,
+  deletedOnly,
 }: {
   title: string;
-  favoriteOnly: boolean;
+  favoriteOnly?: boolean;
+  deletedOnly?: boolean;
 }) {
   const organization = useOrganization();
   const user = useUser();
 
-  console.log(user);
+  
 
   let organizationId: string | undefined = undefined;
   if (organization.isLoaded && user.isLoaded) {
@@ -31,7 +33,14 @@ export default function FileBrowser({
 
   const getFiles = useQuery(
     api.file.getFiles,
-    organizationId ? { organizationId, query, favorite: favoriteOnly } : "skip"
+    organizationId
+      ? {
+          organizationId,
+          query,
+          favorite: favoriteOnly,
+          deletedOnly: deletedOnly,
+        }
+      : "skip"
   );
 
   const isLoading = getFiles === undefined;

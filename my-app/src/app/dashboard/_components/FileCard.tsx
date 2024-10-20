@@ -7,124 +7,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Doc, Id } from "../../../../convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  FileTextIcon,
-  GanttChartIcon,
-  ImageIcon,
-  MoreVertical,
-  StarIcon,
-  TrashIcon,
-} from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { FileTextIcon, GanttChartIcon, ImageIcon } from "lucide-react";
+
 import { ReactNode, useState } from "react";
-import { api } from "../../../../convex/_generated/api";
-import { useMutation } from "convex/react";
-import { useToast } from "@/hooks/use-toast";
+
 import Image from "next/image";
-import { Protect } from "@clerk/clerk-react";
+import FileCardActions from "./FileCardActions";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatRelative } from "date-fns";
 
-const FileCardActions = ({
-  file,
-}: {
-  file: {
-    url?: string | null | undefined;
-    isFavorited?: boolean;
-    _id: Id<"files">;
-    _creationTime: number;
-    organizationId?: string | undefined;
-    name: string;
-    fileId: Id<"_storage">;
-    type: "image" | "csv" | "pdf";
-  };
-}) => {
-  const [open, setOpen] = useState(false);
-  const deleteFile = useMutation(api.file.deleteFile);
-  const toggleFavorite = useMutation(api.file.toggleFavorite);
-
-  const { toast } = useToast();
-  return (
-    <>
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will mark the file for our deletion process. Files are
-              deleted periodically
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (file.organizationId) {
-                  await deleteFile({
-                    fileId: file._id,
-                  });
-                  toast({
-                    variant: "default",
-                    title: "Success",
-                    description: "File deleted successfully",
-                  });
-                }
-              }}
-            >
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <MoreVertical />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            className="text-red-500 flex items-center justify-center cursor-pointer"
-            onClick={() => setOpen(true)}
-          >
-            <TrashIcon className="text-red-500 " />
-            Delete
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            className="text-gray-500 flex items-center justify-center cursor-pointer"
-            onClick={() => toggleFavorite({ fileId: file._id })}
-          >
-            {file.isFavorited ? (
-              <StarIcon className="text-yellow-500 " />
-            ) : (
-              <StarIcon className="text-gray-500 " />
-            )}
-            {file.isFavorited ? "Remove from favorites" : "Add to favorites"}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-};
 
 export default function FileCard({
   file,
@@ -138,6 +32,7 @@ export default function FileCard({
     name: string;
     fileId: Id<"_storage">;
     type: "image" | "csv" | "pdf";
+    userId: Id<"users">;
   };
 }) {
   const typeIcons = {
@@ -146,10 +41,20 @@ export default function FileCard({
     csv: <GanttChartIcon />,
   } as Record<Doc<"files">["type"], ReactNode>;
 
+   const userProfile = useQuery(api.users.getUserProfile, {
+    userId: file.userId,
+  });
+
+    const formattedDate = formatRelative(
+      new Date(file._creationTime),
+      new Date()
+    );
+
+
   return (
     <Card>
       <CardHeader className="relative">
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-base font-normal">
           {typeIcons[file.type]}
           {file.name}
         </CardTitle>
@@ -173,14 +78,26 @@ export default function FileCard({
           <GanttChartIcon className="text-sky-500 w-20 h-20" />
         )}
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button
-          onClick={() => {
-            window.open(file.url ? file.url : "", "_blank");
-          }}
-        >
-          Download
-        </Button>
+      <CardFooter className="flex flex-col gap-2 ">
+        <div className="flex justify-between w-full">
+
+          <div className="flex items-center gap-2 justify-start w-full">
+            <div className="text-sm">{userProfile?.name}</div>
+
+            <Avatar className="w-6 h-6">
+              <AvatarImage src={userProfile?.image} />
+              <AvatarFallback>
+                {userProfile?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <div className="text-sm text-gray-500">{formattedDate}</div>
+        </div>
+
+        
       </CardFooter>
     </Card>
   );
