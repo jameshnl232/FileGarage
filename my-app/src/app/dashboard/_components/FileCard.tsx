@@ -43,7 +43,20 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 
 
-const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
+const FileCardActions = ({
+  file,
+}: {
+  file: {
+    url?: string | null | undefined;
+    isFavorited?: boolean;
+    _id: Id<"files">;
+    _creationTime: number;
+    organizationId?: string | undefined;
+    name: string;
+    fileId: Id<"_storage">;
+    type: "image" | "csv" | "pdf";
+  };
+}) => {
   const [open, setOpen] = useState(false);
   const deleteFile = useMutation(api.file.deleteFile);
   const toggleFavorite = useMutation(api.file.toggleFavorite);
@@ -95,11 +108,11 @@ const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
             Delete
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-yellow-500 flex items-center justify-center cursor-pointer"
+            className="text-gray-500 flex items-center justify-center cursor-pointer"
             onClick={() => toggleFavorite({ fileId: file._id })}
           >
-            <StarIcon className="text-yellow-500 " />
-            Add to favorites
+            {file.isFavorited ? <StarIcon className="text-yellow-500 " /> : <StarIcon className="text-gray-500 " />}
+            {file.isFavorited ? "Remove from favorites" : "Add to favorites"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -112,6 +125,7 @@ export default function FileCard({
 }: {
   file: {
     url?: string | null | undefined;
+    isFavorited?: boolean;
     _id: Id<"files">;
     _creationTime: number;
     organizationId?: string | undefined;

@@ -25,11 +25,6 @@ export default function FileBrowser({
     organizationId = organization.organization?.id ?? user.user?.id;
   }
 
-  const favorites = useQuery(
-    api.file.getAllFavorites,
-    organizationId ? { organizationId } : "skip"
-  );
-  
   const [query, setQuery] = useState("");
 
   const getFiles = useQuery(
@@ -39,6 +34,18 @@ export default function FileBrowser({
 
   const isLoading = getFiles === undefined;
 
+  const favorites = useQuery(
+    api.file.getAllFavorites,
+    organizationId ? { organizationId } : "skip"
+  );
+
+  const modifiedFiles =
+    getFiles?.map((file) => ({
+      ...file,
+      isFavorited: (favorites ?? []).some(
+        (favorite) => favorite.fileId === file._id
+      ),
+    })) ?? [];
   return (
     <>
       <main className="container mx-auto  ">
@@ -65,9 +72,9 @@ export default function FileBrowser({
                   <FileDialog />
                 </div>
 
-                {getFiles.length > 0 ? (
+                {modifiedFiles.length > 0 ? (
                   <div className="grid grid-cols-3 gap-4 mx-10">
-                    {getFiles?.map((file) => (
+                    {modifiedFiles?.map((file) => (
                       <FileCard key={file._id} file={file} />
                     ))}
                   </div>

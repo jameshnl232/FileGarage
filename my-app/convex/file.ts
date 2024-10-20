@@ -16,10 +16,15 @@ export const generateUploadUrl = mutation(async (ctx) => {
 
 async function hasAccessToOrganization(
   ctx: MutationCtx | QueryCtx,
-  tokenIdentifier: string,
   organizationId: string
 ) {
-  const user = await getUser(ctx, tokenIdentifier);
+  const identity = await ctx.auth.getUserIdentity();
+
+  if (!identity) {
+    return null;
+  }
+
+  const user = await getUser(ctx, identity.tokenIdentifier);
 
   const hasAccess =
     user.orgId.includes(organizationId) ||
@@ -36,23 +41,13 @@ const hasAccessToFile = async (
   ctx: QueryCtx | MutationCtx,
   fileId: Id<"files">
 ) => {
-  const identity = await ctx.auth.getUserIdentity();
-
-  if (!identity) {
-    return null;
-  }
-
   const file = await ctx.db.get(fileId);
 
   if (!file) {
     return null;
   }
 
-  const user = await hasAccessToOrganization(
-    ctx,
-    identity.tokenIdentifier,
-    file.organizationId || ""
-  );
+  const user = await hasAccessToOrganization(ctx, file.organizationId || "");
 
   if (!user) {
     return null;
@@ -69,18 +64,7 @@ export const createFile = mutation({
     type: FileType,
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    console.log(identity);
-
-    if (!identity) {
-      throw new ConvexError("Unauthorized");
-    }
-
-    const hasAccess = await hasAccessToOrganization(
-      ctx,
-      identity.tokenIdentifier,
-      args.organizationId
-    );
+    const hasAccess = await hasAccessToOrganization(ctx, args.organizationId);
 
     if (hasAccess) {
       await ctx.db.insert("files", {
@@ -89,6 +73,8 @@ export const createFile = mutation({
         fileId: args.fileId,
         type: args.type,
       });
+    } else {
+      throw new ConvexError("User not in organization");
     }
   },
 });
@@ -100,17 +86,7 @@ export const getFiles = query({
     favorite: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      return [];
-    }
-
-    const user = await hasAccessToOrganization(
-      ctx,
-      identity.tokenIdentifier,
-      args.organizationId
-    );
+    const user = await hasAccessToOrganization(ctx, args.organizationId);
 
     if (!user) {
       return [];
@@ -164,6 +140,8 @@ export const deleteFile = mutation({
 
     if (hasAccess) {
       return await ctx.db.delete(args.fileId);
+    } else {
+      throw new ConvexError("No access to file");
     }
   },
 });
@@ -204,17 +182,7 @@ export const toggleFavorite = mutation({
 export const getAllFavorites = query({
   args: { organizationId: v.string() },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      return [];
-    }
-
-    const user = await hasAccessToOrganization(
-      ctx,
-      identity.tokenIdentifier,
-      args.organizationId
-    );
+    const user = await hasAccessToOrganization(ctx, args.organizationId);
 
     if (!user) {
       return [];
@@ -223,9 +191,7 @@ export const getAllFavorites = query({
     const favorites = await ctx.db
       .query("favorites")
       .withIndex("by_userId_organizationId_fileId", (q) =>
-        q
-          .eq("userId", user._id)
-          .eq("organizationId", args.organizationId)
+        q.eq("userId", user._id).eq("organizationId", args.organizationId)
       )
       .collect();
 
