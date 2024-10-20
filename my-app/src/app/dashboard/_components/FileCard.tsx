@@ -41,7 +41,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-
+import { Protect } from "@clerk/clerk-react";
 
 const FileCardActions = ({
   file,
@@ -107,11 +107,17 @@ const FileCardActions = ({
             <TrashIcon className="text-red-500 " />
             Delete
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem
             className="text-gray-500 flex items-center justify-center cursor-pointer"
             onClick={() => toggleFavorite({ fileId: file._id })}
           >
-            {file.isFavorited ? <StarIcon className="text-yellow-500 " /> : <StarIcon className="text-gray-500 " />}
+            {file.isFavorited ? (
+              <StarIcon className="text-yellow-500 " />
+            ) : (
+              <StarIcon className="text-gray-500 " />
+            )}
             {file.isFavorited ? "Remove from favorites" : "Add to favorites"}
           </DropdownMenuItem>
         </DropdownMenuContent>

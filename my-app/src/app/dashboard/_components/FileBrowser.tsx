@@ -20,6 +20,8 @@ export default function FileBrowser({
   const organization = useOrganization();
   const user = useUser();
 
+  console.log(user);
+
   let organizationId: string | undefined = undefined;
   if (organization.isLoaded && user.isLoaded) {
     organizationId = organization.organization?.id ?? user.user?.id;
@@ -49,10 +51,9 @@ export default function FileBrowser({
   return (
     <>
       <main className="container mx-auto  ">
-        <div className="flex gap-8">
           <div className="w-full">
             {isLoading && (
-              <div className="flex flex-col justify-center items-center w-full h-screen gap-4">
+              <div className="flex flex-col justify-center items-center w-full h-screen gap-4 ">
                 <Loader2 className="animate-spin w-32 h-32 text-gray-500" />
                 <div className="text-2xl font-bold">Loading your files...</div>
               </div>
@@ -60,7 +61,7 @@ export default function FileBrowser({
 
             {!isLoading && (
               <>
-                <div className="flex justify-between mb-12  items-center mx-10">
+                <div className="flex justify-between items-center mx-10 mb-10 gap-2 flex-wrap">
                   <h1 className="text-4xl hover:no-underline font-bold">
                     {title}
                   </h1>
@@ -69,17 +70,17 @@ export default function FileBrowser({
                     setQuery={setQuery}
                     query={query}
                   />
-                  <FileDialog />
+                  {!favoriteOnly && <FileDialog />}
                 </div>
 
-                {modifiedFiles.length > 0 ? (
+                {modifiedFiles.length > 0  ? (
                   <div className="grid grid-cols-3 gap-4 mx-10">
                     {modifiedFiles?.map((file) => (
                       <FileCard key={file._id} file={file} />
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-4 justify-center w-full h-full">
+                  <div className="flex flex-col items-center gap-4 justify-start mt-10 w-full ">
                     <h2 className="text-4xl font-semibold mb-4 mx-10">
                       Search Results
                     </h2>
@@ -89,9 +90,11 @@ export default function FileBrowser({
               </>
             )}
 
-            {!isLoading && getFiles.length === 0 && !query && (
-              <div className="flex flex-col items-center gap-4 justify-center w-full h-full">
-                <Image
+            {!isLoading && getFiles.length === 0 && !query && !favoriteOnly && (
+
+              
+                <div className="flex flex-col items-center gap-4 justify-center w-full h-full">
+                  <Image
                   alt="empty file image"
                   src="/empty.svg"
                   width={300}
@@ -101,10 +104,10 @@ export default function FileBrowser({
                   No files found. Upload your first file
                 </p>
                 <FileDialog />
-              </div>
+                </div>
+            
             )}
           </div>
-        </div>
       </main>
     </>
   );

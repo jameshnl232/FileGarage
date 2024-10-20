@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 export default function SideNav() {
   const pathname = usePathname();
   return (
-    <div className="w-40">
+    <div className="w-40 border-r h-screen">
       <Link href="/dashboard/files">
         <Button
           variant="link"

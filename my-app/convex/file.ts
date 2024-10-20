@@ -27,7 +27,7 @@ async function hasAccessToOrganization(
   const user = await getUser(ctx, identity.tokenIdentifier);
 
   const hasAccess =
-    user.orgId.includes(organizationId) ||
+    user.orgId.some((org) => org.id === organizationId) ||
     user.tokenIdentifier.split("|")[1] === organizationId;
 
   if (!hasAccess) {
@@ -139,6 +139,13 @@ export const deleteFile = mutation({
     const hasAccess = await hasAccessToFile(ctx, args.fileId);
 
     if (hasAccess) {
+
+      const isAdmin = hasAccess.user.orgId.find((org) => org.id === hasAccess.file.organizationId && org.role === "admin");
+
+      if (!isAdmin) {
+        throw new ConvexError("User is not an admin");
+      }
+
       return await ctx.db.delete(args.fileId);
     } else {
       throw new ConvexError("No access to file");

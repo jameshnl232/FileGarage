@@ -21,6 +21,9 @@ export default defineSchema({
 
   users: defineTable({
     tokenIdentifier: v.string(),
-    orgId: v.array(v.string()),
+    orgId: v.array(v.object({
+      id: v.string(),
+      role: v.union(v.literal("admin"), v.literal("member")),
+    })),
   }).index("by_tokenIdentifier", ["tokenIdentifier"]),
 });
