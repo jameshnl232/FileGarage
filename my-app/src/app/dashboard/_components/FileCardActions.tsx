@@ -26,6 +26,7 @@ import { useState } from "react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { DownloadIcon, MoreVertical, StarIcon, TrashIcon, UndoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Protect, useUser } from "@clerk/nextjs";
 
 const FileCardActions = ({
   file,
@@ -47,6 +48,7 @@ const FileCardActions = ({
   const deleteFile = useMutation(api.file.deleteFile);
   const toggleFavorite = useMutation(api.file.toggleFavorite);
   const restoreFile = useMutation(api.file.restoreFile);
+  const me = useQuery(api.users.getMe);
  
 
   const { toast } = useToast();
@@ -88,28 +90,40 @@ const FileCardActions = ({
           <MoreVertical />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem
-            className="text-red-500 flex items-center justify-center cursor-pointer"
-            onClick={() => {
-              if (file.shouldDelete) {
-                restoreFile({ fileId: file._id });
-              } else {
-                setOpen(true);
-              }
+          <Protect
+            condition={(check) => {
+              return (
+                check({
+                  role: "org:admin",
+                }) || file.userId === me?._id
+              );
             }}
+            fallback={<></>}
           >
-            {file.shouldDelete ? (
-              <div className="flex items-center gap-1">
-                <UndoIcon className="text-green-500 w-4 h-4" />
-                Restore
-              </div>
-            ) : (
-              <div className=" flex items-center gap-1">
-                <TrashIcon className="text-red-500 " />
-                Delete
-              </div>
-            )}
-          </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-500 flex items-center justify-center cursor-pointer"
+              onClick={() => {
+                if (file.shouldDelete) {
+                  restoreFile({ fileId: file._id });
+                } else {
+                  setOpen(true);
+                }
+              }}
+            >
+              {file.shouldDelete ? (
+                <div className="flex items-center gap-1">
+                  <UndoIcon className="text-green-500 w-4 h-4" />
+                  Restore
+                </div>
+              ) : (
+                <div className=" flex items-center gap-1">
+                  <TrashIcon className="text-red-500 " />
+                  Delete
+                </div>
+              )}
+            </DropdownMenuItem>
+          </Protect>
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
@@ -126,7 +140,6 @@ const FileCardActions = ({
 
           <DropdownMenuSeparator />
           <DropdownMenuItem>
-            
             <Button
               onClick={() => {
                 window.open(file.url ? file.url : "", "_blank");

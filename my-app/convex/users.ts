@@ -112,3 +112,18 @@ export const getUserProfile = query({
     };
   },
 });
+
+export const getMe = query({
+  args: {},
+  async handler(ctx, args) {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("User not found");
+    }
+
+    const user = await getUser(ctx, identity.tokenIdentifier);
+
+    return user;
+  },
+});

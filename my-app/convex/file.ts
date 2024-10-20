@@ -24,14 +24,24 @@ async function hasAccessToOrganization(
     return null;
   }
 
-  const user = await getUser(ctx, identity.tokenIdentifier);
+ const user = await ctx.db
+   .query("users")
+   .withIndex("by_tokenIdentifier", (q) =>
+     q.eq("tokenIdentifier", identity.tokenIdentifier)
+   )
+   .first();
+
+   if (!user) {
+     return null;
+   }
 
   const hasAccess =
     user.orgId.some((org) => org.id === organizationId) ||
-    user.tokenIdentifier.split("|")[1] === organizationId;
+    user.tokenIdentifier.includes(organizationId);
+
 
   if (!hasAccess) {
-    throw new ConvexError("User not in organization");
+    return null;
   }
 
   return user;
@@ -86,8 +96,10 @@ export const getFiles = query({
     query: v.optional(v.string()),
     favorite: v.optional(v.boolean()),
     deletedOnly: v.optional(v.boolean()),
+    type: v.optional(v.union(v.literal("image"), v.literal("csv"), v.literal("pdf"), 
+    v.literal("all"))),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args) => { 
     const user = await hasAccessToOrganization(ctx, args.organizationId);
 
     if (!user) {
@@ -129,6 +141,10 @@ export const getFiles = query({
       files = files.filter((file) => !file.shouldDelete);
     }
 
+    if (args.type && args.type !== "all") {
+      files = files.filter((file) => file.type === args.type);
+    }
+
     return Promise.all(
       files.map(async (file) => ({
         ...file,
@@ -150,8 +166,8 @@ export const deleteFile = mutation({
     if (hasAccess) {
       const isAdmin = hasAccess.user.orgId.find(
         (org) =>
-          org.id === hasAccess.file.organizationId && org.role === "admin"
-      );
+          org.id === hasAccess.file.organizationId
+      )?.role === "admin";
 
       if (!isAdmin) {
         throw new ConvexError("User is not an admin");
